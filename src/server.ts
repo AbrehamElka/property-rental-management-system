@@ -1,6 +1,6 @@
 import express from "express";
-import { logger } from "../../middlewares/logger";
-import { env } from "../../config/env";
+import { logger } from "./middlewares/logger";
+import { env } from "./config/env";
 
 const app = express();
 const Port = process.env.PORT;
