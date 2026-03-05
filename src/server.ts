@@ -8,9 +8,12 @@ import { errorHandler } from "./middlewares/errorHandler";
 dotenv.config();
 const app = express();
 const logger = require("morgan");
+const cors = require("cors");
 
+app.use(cors());
 app.use(helmet());
 app.use(logger("dev"));
+app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send("hello");

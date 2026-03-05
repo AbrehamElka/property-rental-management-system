@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  PLATFORM_ADMIN
+  PROPERTY_OWNER
+  TENANT
+  SUPPORT_AGENT
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  password    String
+  role        Role     @default(TENANT)
+  isVerified  Boolean  @default(false)
+  isSuspended Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  ownedProperties Property[] @relation("PropertyOwner")
+  contracts       Contract[] @relation("TenantContracts")
+  auditLogs       AuditLog[]
+}
+
+model Property {
+  id          String     @id @default(uuid())
+  title       String
+  description String
+  address     String
+  price       Float
+  ownerId     String
+  owner       User       @relation("PropertyOwner", fields: [ownerId], references: [id])
+  contracts   Contract[]
+  createdAt   DateTime   @default(now())
+}
+
+model Contract {
+  id         String    @id @default(uuid())
+  tenantId   String
+  tenant     User      @relation("TenantContracts", fields: [tenantId], references: [id])
+  propertyId String
+  property   Property  @relation(fields: [propertyId], references: [id])
+  startDate  DateTime
+  endDate    DateTime
+  status     String    @default("ACTIVE") // ACTIVE, TERMINATED, COMPLETED
+  payments   Payment[]
+}
+
+model Payment {
+  id         String    @id @default(uuid())
+  contractId String
+  contract   Contract  @relation(fields: [contractId], references: [id])
+  amount     Float
+  status     String    @default("PENDING") // PENDING, PAID, FAILED
+  paidAt     DateTime?
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String // e.g., "LOGIN", "PROPERTY_CREATED", "ACCOUNT_SUSPENDED"
+  timestamp DateTime @default(now())
+}
